@@ -6,17 +6,18 @@ from typing import Final
 
 
 load_dotenv(find_dotenv())
-TOKEN = os.getenv('TOKEN')
+TOKEN: Final = os.getenv('TOKEN')
 
-BOT_USERNAME = '@redberrypie_bot'
+BOT_USERNAME: Final = '@redberrypie_bot'
+
 
 # Commands
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! Thanks for chatting with me. I am a redberrry bot!")
+    await update.message.reply_text("Hello! Thanks for chatting with me. I am Redberry Bot!")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("I am a redberrry! Please type something so I can respond!")
+    await update.message.reply_text("I am Redberry Bot! Please type something so I can respond!")
 
 
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -24,7 +25,6 @@ async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Responses
-
 def handle_response(text: str) -> str:
     processed: str = text.lower()
 
@@ -37,14 +37,15 @@ def handle_response(text: str) -> str:
     if 'i love python' in processed:
         return 'so do I'
 
-    return 'I do not understand you'
+    return 'I do not know what to say'
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
+    user_id: int = update.message.from_user.id
     text: str = update.message.text
 
-    print(f'User ({update.message.chat.id}) in {message_type} sends "{text}"')
+    print(f'User ({user_id}) from ({update.message.chat.id}) in {message_type} says: "{text}"')
 
     if message_type == 'group':
         if BOT_USERNAME in text:
@@ -55,7 +56,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         response: str = handle_response(text)
 
-    print('Bot:', response)
+    print(f'Bot says: "{response}"')
 
     await update.message.reply_text(response)
 
@@ -82,4 +83,3 @@ if __name__ == '__main__':
     # Polls the bot
     print('Polling...')
     app.run_polling(poll_interval=3)
-
