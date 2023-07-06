@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from typing import Final
 
+from money import Currency
 
 load_dotenv(find_dotenv())
 TOKEN: Final = os.getenv('TOKEN')
@@ -20,8 +21,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("I am Redberry Bot! Please type something so I can respond!")
 
 
-async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("This is a custom command!")
+async def get_currency_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from datetime import datetime as dt
+
+    currency = Currency()
+    currency.set_currency()
+    now = dt.now()
+    bot_reply = f"Currencies at {now.day:02}.{now.month:02}, {now.hour}:{now.minute}\n"
+    for curr, price in currency.get_currency().items():
+        bot_reply += f'{curr}: {price}\n'
+
+    await update.message.reply_text(bot_reply)
 
 
 # Responses
@@ -72,7 +82,7 @@ if __name__ == '__main__':
     # Commands
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('custom', custom_command))
+    app.add_handler(CommandHandler('get_currency', get_currency_command))
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
