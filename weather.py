@@ -1,34 +1,55 @@
+from fake_headers import Headers
+import time
+
 from bs4 import BeautifulSoup
 import requests
-from fake_headers import Headers
-
 
 class Weather:
-    __weather_link = 'https://www.accuweather.com/en/ru/moscow/294021/weather-forecast/294021/'
+    __weather_link = 'https://world-weather.ru/pogoda/russia/moscow/'
 
     def __init__(self):
-        self.__data = []
+        self.headers = Headers().generate()
+        self.data = {period: {'temperature': 'no data', 'pressure': 'no data', 'humidity': 'no data'} for period in ['night', 'morning', 'day', 'evening']}
 
-    def set_weather(self):
+    def test_req(self, url, tries=5):
+        """Wrapper function on requests not to crash code"""
         try:
-            page = requests.get(self.__weather_link, headers=Headers().generate())
-            soup = BeautifulSoup(page.content, 'lxml')
-            print(page.content[:500])
-            temperature = soup.select_one('a.cur-con-weather-card div.forecast-container div.temp').text
-            phrase = soup.select_one('a.cur-con-weather-card card-module div.spaced-content span.phrase').text
-            self.__data += [temperature, phrase]
-
+            response = requests.get(url, headers=self.headers)
+            print(f'[+] {url} {response.status_code}')
         except Exception as e:
-            print(f'Exception occurred in getting weather -> {e}')
+            time.sleep(3)
+            if not tries:
+                raise e
+            print(f'[INFO] tries={tries} => {url}')
+            return self.test_req(url, tries=tries-1)
+        else:
+            return response
 
-    def get_weather(self) -> list[str]:
-        return self.__data
+    def collect_data(self):
+        try:
+            response = self.test_req(self.__weather_link)
+        except Exception as e:
+            print(f'[ERROR]: exception occurred in {__name__}.py => {e}')
+            return
+
+        soup = BeautifulSoup(response.text, 'lxml')
+
+        table = soup.find('div', class_='pane').find('table', class_='weather-today')
+
+        for period in ['night', 'morning', 'day', 'evening']:
+            try:
+                period_tag = table.find('tr', class_=f'{period}')
+                self.data[f'{period}']['temperature'] = period_tag.find('td', class_='weather-temperature').find('span').text.strip()
+                self.data[f'{period}']['pressure'] = period_tag.find('td', class_='weather-pressure').text.strip()
+                self.data[f'{period}']['humidity'] = period_tag.find('td', class_='weather-humidity').text.strip()
+            except Exception as e:
+                print(f'[ERROR]: exception occurred in {__name__}.py => {e}')
 
 
 def main():
     weather = Weather()
-    weather.set_weather()
-    print(weather.get_weather())
+    weather.collect_data()
+    print(weather.data)
 
 
 if __name__ == '__main__':

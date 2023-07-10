@@ -5,6 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 from typing import Final
 
 from money import Currency
+from weather import Weather
 
 load_dotenv(find_dotenv())
 TOKEN: Final = os.getenv('TOKEN')
@@ -33,6 +34,22 @@ async def get_currency_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
     await update.message.reply_text(bot_reply)
 
+
+async def get_weather_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    weather = Weather()
+    weather.collect_data()
+
+    bot_reply_msg = f'Weather today\n\n'
+
+    for period in weather.data.items():
+        bot_reply_msg += f'{period[0].capitalize()}\n'
+        for attrs in period[1].items():
+            bot_reply_msg += f'{attrs[0]}: {attrs[1]}'
+            if not attrs == list(period[1].items())[-1]:
+                bot_reply_msg += ', '
+        bot_reply_msg += '\n\n'
+
+    await update.message.reply_text(bot_reply_msg)
 
 # Responses
 def handle_response(text: str) -> str:
@@ -83,6 +100,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
     app.add_handler(CommandHandler('get_currency', get_currency_command))
+    app.add_handler(CommandHandler('get_weather', get_weather_command))
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
