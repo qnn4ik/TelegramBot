@@ -1,3 +1,6 @@
+from fake_headers import Headers
+import time
+
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -6,32 +9,38 @@ import time
 class Currency:
     """Collects currencies form website"""
 
-    currency_link = 'https://ru.investing.com/'
-    currencies_links = {
+    __currency_link = 'https://ru.investing.com/'
+    __currencies_links = {
         'USD/RUB': 'currencies/usd-rub/',
         'EUR/RUB': 'currencies/eur-rub/',
         'BTC/USD': 'crypto/bitcoin/',
     }
 
-    headers = {
-        'Age': '74196',
-        'Alt-Svc': 'h3=":443"; ma=86400',
-        'Cache-Control': 'public, max-age=581383',
-        'Cf-Cache-Status': 'HIT',
-        'Cf-Ray': '7e1f69cbcd07b351-PRG',
-        'Content-Encoding:': 'br',
-    }
-
     def __init__(self):
+        self.headers = Headers().generate()
         self.currencies_prices = {}
 
-    def set_currency(self):
+    def test_req(self, url, tries=5):
+        """Wrapper function on requests not to crash code"""
+        try:
+            response = requests.get(url, headers=self.headers)
+            print(f'[+] {url} {response.status_code}')
+        except Exception as e:
+            time.sleep(3)
+            if not tries:
+                raise e
+            print(f'[INFO] tries={tries} => {url}')
+            return self.test_req(url, tries=tries-1)
+        else:
+            return response
+
+    def collect_currency(self):
         """Knows currency prices from the web"""
 
-        for curr, link in self.currencies_links.items():
+        for curr, link in self.__currencies_links.items():
             try:
-                page = requests.get(self.currency_link + link)
-                soup = BeautifulSoup(page.content, 'lxml')
+                response = self.test_req(self.__currency_link + link)
+                soup = BeautifulSoup(response.text, 'lxml')
 
                 if 'currencies' in link:
                     convert = soup.select(
@@ -42,25 +51,16 @@ class Currency:
                         'div.cryptoCurrentData div.top span.inlineblock span#last_last'
                     )
 
-                self.currencies_prices[curr] = convert[0].text.replace('.', '')
+                self.currencies_prices[curr] = convert[0].text.replace('.', '').strip()
 
-            except:
-                print(f'#Exception occured with {curr}')
-            # else:
-            #     print(f'#Succeed with {curr}')
-            finally:
-                time.sleep(1)
-
-    def get_currency(self) -> dict:
-        """Gets currency prices"""
-
-        return self.currencies_prices
+            except Exception as e:
+                print(f'[ERROR]: exception occurred in {__name__}.py => {e}')
 
 
 def main():
     currency = Currency()
-    currency.set_currency()
-    prices = currency.get_currency()
+    currency.collect_currency()
+    prices = currency.currencies_prices
     print(prices)
 
 
