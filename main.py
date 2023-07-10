@@ -26,10 +26,10 @@ async def get_currency_command(update: Update, context: ContextTypes.DEFAULT_TYP
     from datetime import datetime as dt
 
     currency = Currency()
-    currency.set_currency()
+    currency.collect_currency()
     now = dt.now()
-    bot_reply = f"Currencies at {now.day:02}.{now.month:02}, {now.hour}:{now.minute}\n"
-    for curr, price in currency.get_currency().items():
+    bot_reply = f"Currencies at {now.day:02}.{now.month:02}, {now.hour:02}:{now.minute:02}\n"
+    for curr, price in currency.currencies_prices.items():
         bot_reply += f'{curr}: {price}\n'
 
     await update.message.reply_text(bot_reply)
