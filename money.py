@@ -41,17 +41,18 @@ class Currency:
             try:
                 response = self.test_req(self.__currency_link + link)
                 soup = BeautifulSoup(response.text, 'lxml')
+                value = 0
 
                 if 'currencies' in link:
-                    convert = soup.select(
-                        'div.instrument-price_instrument-price__xfgbB span.text-2xl[data-test="instrument-price-last"]'
-                    )
+                    value = soup.select_one(
+                        'div[data-test="instrument-header-details"] span.text-2xl'
+                    ).text.strip()
                 elif 'crypto' in link:
-                    convert = soup.select(
-                        'div.cryptoCurrentData div.top span.inlineblock span#last_last'
-                    )
+                    value = soup.select_one(
+                        'div.text-5xl'
+                    ).text.strip()
 
-                self.currencies_prices[curr] = convert[0].text.replace('.', '').strip()
+                self.currencies_prices[curr] = value
 
             except Exception as e:
                 print(f'[ERROR]: exception occurred in {__name__}.py => {e}')
